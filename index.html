@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>艺术微喷价格计算器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            margin: 20px auto;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a237e 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1rem;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        select:focus, input:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .custom-size-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            font-weight: 600;
+            margin-top: 10px;
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        button:hover, button:active {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        .result-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 20px;
+            text-align: center;
+            border: 2px solid #3498db;
+        }
+        
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #27ae60;
+            margin: 15px 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .result-label {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .price-result {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #3498db;
+            margin: 15px 0;
+        }
+        
+        .paper-preview {
+            width: 100%;
+            max-width: 400px;
+            margin: 25px auto;
+            background: #f0f4f8;
+            border: 2px solid #2c3e50;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        
+        .paper-area {
+            width: 100%;
+            min-height: 180px;
+            background: white;
+            border: 1px dashed #3498db;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            padding: 15px;
+        }
+        
+        .preview-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .print-item {
+            position: absolute;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            border-radius: 4px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+            font-size: 0.9rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .print-item.portrait {
+            background: linear-gradient(135deg, #3498db, #2c3e50);
+        }
+        
+        .print-item.landscape {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+        
+        .print-item.more {
+            background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+        }
+        
+        .print-item:hover {
+            transform: scale(1.05);
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.8);
+        }
+        
+        .paper-type-info {
+            margin-top: 20px;
+            text-align: center;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            font-size: 1rem;
+            width: 100%;
+            border-left: 4px solid #3498db;
+        }
+        
+        .paper-details {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .paper-detail {
+            text-align: center;
+            padding: 12px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            min-width: 120px;
+            margin: 5px;
+            flex: 1;
+        }
+        
+        .paper-detail-value {
+            font-weight: bold;
+            color: #2e7d32;
+            font-size: 1.2rem;
+            margin-top: 5px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            font-size: 0.9rem;
+            margin-top: auto;
+            width: 100%;
+        }
+        
+        .spacing-note {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff8e1;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #fff9c4, #ffecb3);
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid #ffc107;
+            margin-top: 15px;
+        }
+        
+        .print-icon-with-width {
+            position: relative;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        .print-icon-with-width .width-badge {
+            position: absolute;
+            bottom: -8px;
+            right: -8px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border: 2px solid white;
+        }
+        
+        .preview-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .copy-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e0f7fa;
+            border-radius: 12px;
+            border: 2px solid #0097a7;
+        }
+        
+        .copy-box {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #4db6ac;
+            border-radius: 8px;
+            background: #e8f5e9;
+            font-size: 1rem;
+            min-height: 80px;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+        
+        .copy-btn {
+            background: linear-gradient(135deg, #009688, #00796b);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 0 auto;
+        }
+        
+        .copy-btn:hover {
+            background: linear-gradient(135deg, #00897b, #00695c);
+        }
+        
+        @media (max-width: 480px) {
+            .custom-size-inputs {
+                grid-template-columns: 1fr;
+            }
+            
+            .paper-details {
+                flex-direction: column;
+            }
+            
+            .form-group {
+                padding: 15px;
+            }
+            
+            .result-value {
+                font-size: 2rem;
+            }
+            
+            .price-result {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-calculator"></i> 艺术微喷价格计算器</h1>
+            <p class="subtitle">自动排版与价格预估~</p>
+        </header>
+        
+        <div class="content">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="paperSize"><i class="fas fa-sheet-plastic"></i> 纸张尺寸</label>
+                    <select id="paperSize">
+                        <option value="A4">A4 (21.0 × 29.7 厘米)</option>
+                        <option value="A3">A3 (29.7 × 42.0 厘米)</option>
+                        <option value="A5">A5 (14.8 × 21.0 厘米)</option>
+                        <option value="B4">B4 (25.0 × 35.3 厘米)</option>
+                        <option value="B5">B5 (17.6 × 25.0 厘米)</option>
+                        <option value="postcard">明信片 (10.0 × 15.0 厘米)</option>
+                        <option value="custom">自定义尺寸</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="customSizeGroup" style="display: none;">
+                    <label><i class="fas fa-ruler"></i> 自定义尺寸（厘米）</label>
+                    <div class="custom-size-inputs">
+                        <div>
+                            <input type="number" id="customWidth" min="1" max="60" step="0.1" placeholder="宽度" value="10">
+                        </div>
+                        <div>
+                            <input type="number" id="customHeight" min="1" step="0.1" placeholder="高度" value="15">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="quantity"><i class="fas fa-copy"></i> 打印数量</label>
+                    <input type="number" id="quantity" min="1" value="8">
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-paperclip"></i> 纸张类型</label>
+                    <select id="paperType">
+                        <option value="matte">绒面照片纸 (60cm宽, 15米长)</option>
+                        <option value="coarse">增强粗面纸 (43.2cm宽, 30米长)</option>
+                        <option value="premium">高级光泽纸 (50cm宽, 20米长)</option>
+                        <option value="eco">经济型哑光纸 (45cm宽, 25米长)</option>
+                    </select>
+                    <div class="spacing-note">
+                        <i class="fas fa-info-circle"></i> 成品存在0.2厘米间距，所以可能无法铺满噢~
+                    </div>
+                </div>
+                
+                <button id="calculateBtn">
+                    <i class="fas fa-calculator"></i> 计算价格
+                </button>
+                
+                <div class="paper-preview">
+                    <div class="preview-title">
+                        <span class="print-icon-with-width">
+                            <i class="fas fa-print fa-2x"></i>
+                            <span class="width-badge" id="printIconWidth">60</span>
+                        </span>
+                        <h3>打印预览</h3>
+                    </div>
+                    <div class="paper-area" id="paperArea">
+                        <div class="preview-container" id="previewContainer">
+                            <!-- 成品将在这里动态显示 -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result-box">
+                    <div class="result-label">预估打印价格</div>
+                    <div class="result-value" id="priceResult">0.00 元</div>
+                    
+                    <div class="result-label">所需最小纸张长度</div>
+                    <div class="price-result" id="result">0.00 厘米</div>
+                    
+                    <div class="paper-type-info">
+                        <div id="paperTypeInfo">绒面照片纸 | 15米卷</div>
+                    </div>
+                    
+                    <div class="paper-details">
+                        <div class="paper-detail">
+                            <div>纸张利用率</div>
+                            <div class="paper-detail-value" id="utilization">0%</div>
+                        </div>
+                        <div class="paper-detail">
+                            <div>每张价格</div>
+                            <div class="paper-detail-value" id="costPerItem">0.00 元</div>
+                        </div>
+                    </div>
+                    
+                    <div class="highlight-box">
+                        <i class="fas fa-lightbulb"></i> 
+                        <strong>小贴士：</strong> 可以直接在下面复制需求发给客服噢！
+                    </div>
+                    
+                    <div class="copy-section">
+                        <h4 style="text-align: center; margin-bottom: 10px; color: #00796b;">
+                            <i class="fas fa-clipboard"></i> 需求复制
+                        </h4>
+                        <textarea class="copy-box" id="copyBox" readonly></textarea>
+                        <button class="copy-btn" id="copyBtn">
+                            <i class="fas fa-copy"></i> 复制需求
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>© 2025 屑店 艺术微喷价格计算器</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 纸张类型定义（添加宽度属性）
+            const paperTypes = {
+                'matte': { name: '绒面照片纸', width: 60, length: 3000, price: 1600 },
+                'coarse': { name: '增强粗面纸', width: 60, length: 3000, price: 1600 },
+                'premium': { name: '315克硫化钡艺术纸', width: 60, length: 1500, price: 3000 },
+                'eco': { name: '120克彩喷纸', width: 60, length: 3000, price: 500 }
+            };
+            
+            // 纸张尺寸定义（宽度 × 高度，单位：厘米）
+            const paperSizes = {
+                'A4': { width: 21.0, height: 29.7 },
+                'A3': { width: 29.7, height: 42.0 },
+                'A5': { width: 14.8, height: 21.0 },
+                'B4': { width: 25.0, height: 35.3 },
+                'B5': { width: 17.6, height: 25.0 },
+                'postcard': { width: 10.0, height: 15.0 }
+            };
+            
+            // DOM元素
+            const paperSizeSelect = document.getElementById('paperSize');
+            const paperTypeSelect = document.getElementById('paperType');
+            const customSizeGroup = document.getElementById('customSizeGroup');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const resultElement = document.getElementById('result');
+            const priceResultElement = document.getElementById('priceResult');
+            const paperArea = document.getElementById('paperArea');
+            const previewContainer = document.getElementById('previewContainer');
+            const paperTypeInfo = document.getElementById('paperTypeInfo');
+            const utilizationElement = document.getElementById('utilization');
+            const costPerItemElement = document.getElementById('costPerItem');
+            const customWidthInput = document.getElementById('customWidth');
+            const customHeightInput = document.getElementById('customHeight');
+            const quantityInput = document.getElementById('quantity');
+            const printIconWidth = document.getElementById('printIconWidth');
+            const copyBox = document.getElementById('copyBox');
+            const copyBtn = document.getElementById('copyBtn');
+            
+            // 固定间距（0.2厘米）
+            const hSpacing = 0.2;
+            const vSpacing = 0.2;
+            
+            // 更新纸张类型信息
+            function updatePaperTypeInfo() {
+                const selectedType = paperTypeSelect.value;
+                const type = paperTypes[selectedType];
+                paperTypeInfo.textContent = `${type.name} | ${type.width}cm宽 | ${type.length/100}米卷`;
+                
+                // 更新打印图标上的宽度标记
+                printIconWidth.textContent = type.width;
+            }
+            
+            // 切换自定义尺寸显示
+            paperSizeSelect.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    customSizeGroup.style.display = 'block';
+                } else {
+                    customSizeGroup.style.display = 'none';
+                    calculateAndDisplay();
+                }
+            });
+            
+            // 纸张类型变化
+            paperTypeSelect.addEventListener('change', function() {
+                updatePaperTypeInfo();
+                calculateAndDisplay();
+            });
+            
+            // 计算按钮事件
+            calculateBtn.addEventListener('click', calculateAndDisplay);
+            
+            // 复制按钮事件
+            copyBtn.addEventListener('click', function() {
+                copyBox.select();
+                document.execCommand('copy');
+                
+                // 显示复制成功反馈
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> 已复制';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                }, 2000);
+            });
+            
+            // 输入变化时自动更新
+            [paperSizeSelect, customWidthInput, customHeightInput, quantityInput].forEach(el => {
+                el.addEventListener('input', calculateAndDisplay);
+            });
+            
+            // 初始更新
+            updatePaperTypeInfo();
+            calculateAndDisplay();
+            
+            function calculateAndDisplay() {
+                const dimensions = getPaperDimensions();
+                const w = dimensions.width;
+                const h = dimensions.height;
+                const quantity = parseInt(quantityInput.value) || 1;
+                
+                // 获取选择的纸张类型
+                const selectedType = paperTypeSelect.value;
+                const paperType = paperTypes[selectedType];
+                const printerWidth = paperType.width;
+                
+                // 计算两种方向的最优布局
+                const portraitLayout = calculateLayout(printerWidth, w, h, quantity);
+                const landscapeLayout = calculateLayout(printerWidth, h, w, quantity);
+                
+                // 选择总长度最小的布局
+                let bestLayout = portraitLayout;
+                let orientation = "纵向";
+                
+                if (landscapeLayout.totalLength < portraitLayout.totalLength) {
+                    bestLayout = landscapeLayout;
+                    orientation = "横向";
+                }
+                
+                // 计算空间利用率
+                const totalArea = printerWidth * bestLayout.totalLength;
+                const usedArea = quantity * bestLayout.width * bestLayout.height;
+                const utilization = bestLayout.perRow > 0 ? Math.min(100, Math.round((usedArea / totalArea) * 100)) : 0;
+                
+                // 计算价格（按比例）
+                const price = (bestLayout.totalLength / paperType.length) * paperType.price;
+                
+                // 计算每张成本
+                const costPerItem = price / quantity;
+                
+                // 更新结果
+                if (bestLayout.width > printerWidth) {
+                    resultElement.textContent = `错误：宽度超过${printerWidth}厘米`;
+                    priceResultElement.textContent = "无法计算";
+                    utilizationElement.textContent = "0%";
+                    costPerItemElement.textContent = "0.00 元";
+                } else {
+                    resultElement.textContent = bestLayout.totalLength.toFixed(2) + " 厘米";
+                    priceResultElement.textContent = price.toFixed(2) + " 元";
+                    utilizationElement.textContent = utilization + "%";
+                    costPerItemElement.textContent = costPerItem.toFixed(2) + " 元";
+                }
+                
+                // 更新可视化
+                updateVisualization(
+                    printerWidth,
+                    bestLayout.width, 
+                    bestLayout.height, 
+                    quantity, 
+                    bestLayout.perRow, 
+                    bestLayout.rows,
+                    orientation
+                );
+                
+                // 更新复制框内容
+                updateCopyBox(paperType.name, w, h, quantity, bestLayout.totalLength, price);
+            }
+            
+            function calculateLayout(printerWidth, width, height, quantity) {
+                // 当宽度大于纸张宽度时，无法排列
+                if (width > printerWidth) {
+                    return {
+                        perRow: 0,
+                        rows: 0,
+                        totalLength: 0,
+                        width: width,
+                        height: height
+                    };
+                }
+                
+                // 计算每行可以放置的成品数量
+                let perRow = Math.floor((printerWidth + hSpacing) / (width + hSpacing));
+                
+                // 计算需要多少行
+                const rows = perRow > 0 ? Math.ceil(quantity / perRow) : 0;
+                
+                // 计算总长度
+                const totalLength = perRow > 0 ? (height * rows) + (vSpacing * (rows - 1)) : 0;
+                
+                return {
+                    perRow,
+                    rows,
+                    totalLength,
+                    width,
+                    height
+                };
+            }
+            
+            function getPaperDimensions() {
+                const selectedSize = paperSizeSelect.value;
+                
+                if (selectedSize === 'custom') {
+                    const width = parseFloat(customWidthInput.value) || 10.0;
+                    const height = parseFloat(customHeightInput.value) || 15.0;
+                    return { 
+                        width,
+                        height
+                    };
+                }
+                
+                // 获取预设尺寸
+                return paperSizes[selectedSize];
+            }
+            
+            function updateVisualization(printerWidth, w, h, quantity, perRow, rows, orientation) {
+                // 清除现有内容
+                previewContainer.innerHTML = '';
+                
+                // 如果没有有效数据，显示提示
+                if (w > printerWidth || perRow === 0 || rows === 0) {
+                    const previewMsg = document.createElement('div');
+                    previewMsg.style.textAlign = 'center';
+                    previewMsg.style.padding = '60px 10px';
+                    previewMsg.style.color = '#e74c3c';
+                    previewMsg.style.fontWeight = 'bold';
+                    previewMsg.style.fontSize = '1.1rem';
+                    previewMsg.innerHTML = w > printerWidth ? `宽度超过${printerWidth}cm！` : '输入参数查看排列';
+                    previewContainer.appendChild(previewMsg);
+                    return;
+                }
+                
+                // 计算比例因子
+                const containerWidth = paperArea.clientWidth - 30; // 减去内边距
+                const scale = containerWidth / printerWidth; // 纸张宽度比例
+                
+                // 计算整个排列区域的宽度和高度
+                const totalWidth = (w * perRow) + (hSpacing * (perRow - 1));
+                const totalHeight = (h * Math.min(2, rows)) + (vSpacing * (Math.min(2, rows) - 1));
+                
+                // 设置预览容器的尺寸（居中显示）
+                previewContainer.style.width = `${totalWidth * scale}px`;
+                previewContainer.style.height = `${totalHeight * scale}px`;
+                
+                // 计算预览中显示的行数（最多2行）
+                const previewRows = Math.min(2, rows);
+                
+                // 计算总显示数量
+                const maxVisible = previewRows * perRow;
+                const showMoreIndicator = quantity > maxVisible;
+                
+                // 添加预览布局
+                for (let i = 0; i < previewRows; i++) {
+                    for (let j = 0; j < perRow; j++) {
+                        const index = i * perRow + j;
+                        if (index >= quantity) break;
+                        
+                        // 如果是第二行最后一列且需要显示更多指示器
+                        const isLastInSecondRow = (i === 1 && j === perRow - 1 && showMoreIndicator);
+                        
+                        const sheet = document.createElement('div');
+                        sheet.className = 'print-item';
+                        sheet.classList.add(orientation === "横向" ? 'landscape' : 'portrait');
+                        
+                        if (isLastInSecondRow) {
+                            sheet.classList.add('more');
+                        }
+                        
+                        // 计算位置
+                        const left = j * (w + hSpacing) * scale;
+                        const top = i * (h + vSpacing) * scale;
+                        
+                        sheet.style.left = `${left}px`;
+                        sheet.style.top = `${top}px`;
+                        sheet.style.width = `${w * scale}px`;
+                        sheet.style.height = `${h * scale}px`;
+                        
+                        // 添加序号
+                        if (isLastInSecondRow) {
+                            sheet.textContent = `${index + 1}+更多 ${quantity - maxVisible + 1} 项`;
+                            sheet.style.fontSize = `${Math.min(14, w * scale * 0.18)}px`;
+                        } else {
+                            sheet.textContent = index + 1;
+                            sheet.style.fontSize = `${Math.min(14, w * scale * 0.2)}px`;
+                        }
+                        
+                        previewContainer.appendChild(sheet);
+                    }
+                }
+                
+                // 添加更多指示器
+                // if (showMoreIndicator) {
+                //     const moreIndicator = document.createElement('div');
+                //     moreIndicator.style.position = 'absolute';
+                //     moreIndicator.style.left = `${(perRow - 1) * (w + hSpacing) * scale + w * scale * 0.7}px`;
+                //     moreIndicator.style.top = `${(h + vSpacing) * scale + h * scale * 0.3}px`;
+                //     moreIndicator.style.fontSize = `${Math.min(12, w * scale * 0.15)}px`;
+                //     moreIndicator.style.fontWeight = 'bold';
+                //     moreIndicator.style.color = '#e74c3c';
+                //     moreIndicator.textContent = `更多 ${quantity - maxVisible + 1} 项`;
+                //     previewContainer.appendChild(moreIndicator);
+                // }
+            }
+            
+            function updateCopyBox(paperType, width, height, quantity, length, price) {
+                // 获取纸张尺寸描述
+                let sizeDesc = '';
+                const selectedSize = paperSizeSelect.value;
+                
+                if (selectedSize === 'custom') {
+                    sizeDesc = `自定义尺寸 (${width} × ${height} 厘米)`;
+                } else {
+                    const size = paperSizes[selectedSize];
+                    sizeDesc = `${selectedSize} (${size.width} × ${size.height} 厘米)`;
+                }
+                
+                // 构建复制内容
+                const content = `打印需求详情：
+纸张类型: ${paperType}
+纸张尺寸: ${sizeDesc}
+打印数量: ${quantity}
+所需长度: ${length.toFixed(2)} 厘米
+预估价格: ${price.toFixed(2)} 元
+`;
+                
+                copyBox.value = content;
+            }
+        });
+    </script>
+</body>
+</html>
