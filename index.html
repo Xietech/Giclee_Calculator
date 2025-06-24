@@ -345,6 +345,28 @@
             background: linear-gradient(135deg, #00897b, #00695c);
         }
         
+                .cost-breakdown {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #c8e6c9;
+        }
+        
+        .cost-item:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            color: #2e7d32;
+            font-size: 1.1rem;
+        }
+
         @media (max-width: 480px) {
             .custom-size-inputs {
                 grid-template-columns: 1fr;
@@ -410,10 +432,10 @@
                 <div class="form-group">
                     <label><i class="fas fa-paperclip"></i> 纸张类型</label>
                     <select id="paperType">
-                        <option value="matte">绒面照片纸 (60cm宽, 15米长)</option>
-                        <option value="coarse">增强粗面纸 (43.2cm宽, 30米长)</option>
-                        <option value="premium">高级光泽纸 (50cm宽, 20米长)</option>
-                        <option value="eco">经济型哑光纸 (45cm宽, 25米长)</option>
+                        <option value="matte">260克绒面照片纸 (60cm宽, 30米长)</option>
+                        <option value="coarse">230克增强粗面纸 (60cm宽, 30米长)</option>
+                        <option value="premium">315克硫化钡艺术纸 (60cm宽, 15米长)</option>
+                        <option value="eco">120克彩喷纸 (60cm宽, 25米长)</option>
                     </select>
                     <div class="spacing-note">
                         <i class="fas fa-info-circle"></i> 成品存在0.2厘米间距，所以可能无法铺满噢~
@@ -441,7 +463,7 @@
                 
                 <div class="result-box">
                     <div class="result-label">预估打印价格</div>
-                    <div class="result-value" id="priceResult">0.00 元</div>
+                    <div class="result-value" id="totalCost">0.00 元</div> <!-- 改为totalCost -->
                     
                     <div class="result-label">所需最小纸张长度</div>
                     <div class="price-result" id="result">0.00 厘米</div>
@@ -461,6 +483,21 @@
                         </div>
                     </div>
                     
+                    <div class="cost-breakdown">
+                        <div class="cost-item">
+                            <span>纸张价格：</span>
+                            <span id="paperCost">0.00 元</span>
+                        </div>
+                        <div class="cost-item">
+                            <span>墨水价格：</span>
+                            <span id="inkCost">0.00 元</span>
+                        </div>
+                        <div class="cost-item">
+                            <span>预估总价格：</span>
+                            <span id="totalCostend">0.00 元</span> <!--改id-->
+                        </div>
+                    </div>
+          
                     <div class="highlight-box">
                         <i class="fas fa-lightbulb"></i> 
                         <strong>小贴士：</strong> 可以直接在下面复制需求发给客服噢！
@@ -488,10 +525,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 纸张类型定义（添加宽度属性）
             const paperTypes = {
-                'matte': { name: '绒面照片纸', width: 60, length: 3000, price: 1600 },
-                'coarse': { name: '增强粗面纸', width: 60, length: 3000, price: 1600 },
-                'premium': { name: '315克硫化钡艺术纸', width: 60, length: 1500, price: 3000 },
-                'eco': { name: '120克彩喷纸', width: 60, length: 3000, price: 500 }
+                'matte': { name: '绒面照片纸', width: 60, length: 3000, price: 800 },
+                'coarse': { name: '增强粗面纸', width: 60, length: 3000, price: 800 },
+                'premium': { name: '315克硫化钡艺术纸', width: 60, length: 1500, price: 2000 },
+                'eco': { name: '120克彩喷纸', width: 60, length: 3000, price: 300 }
             };
             
             // 纸张尺寸定义（宽度 × 高度，单位：厘米）
@@ -504,15 +541,17 @@
                 'postcard': { width: 10.0, height: 15.0 }
             };
             
+            const inkPricePerSqMeter = 50; //墨水价格
+
             // DOM元素
             const paperSizeSelect = document.getElementById('paperSize');
             const paperTypeSelect = document.getElementById('paperType');
             const customSizeGroup = document.getElementById('customSizeGroup');
             const calculateBtn = document.getElementById('calculateBtn');
             const resultElement = document.getElementById('result');
-            const priceResultElement = document.getElementById('priceResult');
-            const paperArea = document.getElementById('paperArea');
-            const previewContainer = document.getElementById('previewContainer');
+            // const priceResultElement = document.getElementById('priceResult');
+            // const paperArea = document.getElementById('paperArea');
+            // const previewContainer = document.getElementById('previewContainer');
             const paperTypeInfo = document.getElementById('paperTypeInfo');
             const utilizationElement = document.getElementById('utilization');
             const costPerItemElement = document.getElementById('costPerItem');
@@ -522,7 +561,11 @@
             const printIconWidth = document.getElementById('printIconWidth');
             const copyBox = document.getElementById('copyBox');
             const copyBtn = document.getElementById('copyBtn');
-            
+            const paperCostElement = document.getElementById('paperCost');
+            const inkCostElement = document.getElementById('inkCost');
+            const totalCostElement = document.getElementById('totalCost');
+            const totalCostendElement = document.getElementById('totalCostend');
+
             // 固定间距（0.2厘米）
             const hSpacing = 0.2;
             const vSpacing = 0.2;
@@ -608,20 +651,33 @@
                 const utilization = bestLayout.perRow > 0 ? Math.min(100, Math.round((usedArea / totalArea) * 100)) : 0;
                 
                 // 计算价格（按比例）
-                const price = (bestLayout.totalLength / paperType.length) * paperType.price;
+                const paperCost = (bestLayout.totalLength / paperType.length) * paperType.price;
+                
+                // 计算墨水成本（按打印面积计算）
+                const singleItemArea = (bestLayout.width * bestLayout.height) / 10000; // 平方厘米转平方米
+                const inkCost = singleItemArea * quantity * inkPricePerSqMeter;
+                
+                // 计算总成本
+                const totalCost = paperCost + inkCost;
                 
                 // 计算每张成本
-                const costPerItem = price / quantity;
+                const costPerItem = totalCost / quantity;
                 
                 // 更新结果
                 if (bestLayout.width > printerWidth) {
                     resultElement.textContent = `错误：宽度超过${printerWidth}厘米`;
-                    priceResultElement.textContent = "无法计算";
+                    paperCostElement.textContent = "无法计算";
+                    inkCostElement.textContent = "无法计算";
+                    totalCostElement.textContent = "无法计算";
+                    totalCostendElement.textContent = "无法计算";
                     utilizationElement.textContent = "0%";
                     costPerItemElement.textContent = "0.00 元";
                 } else {
                     resultElement.textContent = bestLayout.totalLength.toFixed(2) + " 厘米";
-                    priceResultElement.textContent = price.toFixed(2) + " 元";
+                    paperCostElement.textContent = paperCost.toFixed(2) + " 元";
+                    inkCostElement.textContent = inkCost.toFixed(2) + " 元";
+                    totalCostElement.textContent = totalCost.toFixed(2) + " 元";
+                    totalCostendElement.textContent = totalCost.toFixed(2) + " 元";
                     utilizationElement.textContent = utilization + "%";
                     costPerItemElement.textContent = costPerItem.toFixed(2) + " 元";
                 }
@@ -638,7 +694,7 @@
                 );
                 
                 // 更新复制框内容
-                updateCopyBox(paperType.name, w, h, quantity, bestLayout.totalLength, price);
+                updateCopyBox(paperType.name, w, h, quantity, bestLayout.totalLength, paperCost, inkCost, totalCost);
             }
             
             function calculateLayout(printerWidth, width, height, quantity) {
@@ -776,7 +832,7 @@
                 // }
             }
             
-            function updateCopyBox(paperType, width, height, quantity, length, price) {
+            function updateCopyBox(paperType, width, height, quantity, length, paperCost, inkCost, totalCost) {
                 // 获取纸张尺寸描述
                 let sizeDesc = '';
                 const selectedSize = paperSizeSelect.value;
@@ -788,13 +844,20 @@
                     sizeDesc = `${selectedSize} (${size.width} × ${size.height} 厘米)`;
                 }
                 
+                // 计算单张面积
+                const singleArea = (width * height) / 10000; // 平方米
+                
                 // 构建复制内容
+                // 删除
+                // 单张面积: ${singleArea.toFixed(4)} 平方米
+                // 纸张成本: ${paperCost.toFixed(2)} 元
+                // 墨水成本: ${inkCost.toFixed(2)} 元 (50元/㎡)
                 const content = `打印需求详情：
 纸张类型: ${paperType}
 纸张尺寸: ${sizeDesc}
 打印数量: ${quantity}
 所需长度: ${length.toFixed(2)} 厘米
-预估价格: ${price.toFixed(2)} 元
+预估总成本: ${totalCost.toFixed(2)} 元
 `;
                 
                 copyBox.value = content;
